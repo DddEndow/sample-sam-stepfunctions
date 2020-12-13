@@ -11,9 +11,9 @@ Resources:
     Properties:
       DefinitionUri: statemachine/stock_trader.asl.json
       DefinitionSubstitutions:
-        StockCheckerFunctionArn: !GetAtt StockCheckerFunction.Arn
-        StockSellerFunctionArn: !GetAtt StockSellerFunction.Arn
-        StockBuyerFunctionArn: !GetAtt StockBuyerFunction.Arn
+        SetUserFunctionArn: !GetAtt SetUserFunction.Arn
+        GetUserFromS3FunctionArn: !GetAtt GetUserFromS3Function.Arn
+        SaveUserToDynamoDBFunctionArn: !GetAtt SaveUserToDynamoDBFunction.Arn
         DDBPutItem: !Sub arn:${AWS::Partition}:states:::dynamodb:putItem
         DDBTable: !Ref TransactionTable
       Events:
@@ -25,32 +25,32 @@ Resources:
             Schedule: "rate(1 hour)"
       Policies: # Find out more about SAM policy templates: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
         - LambdaInvokePolicy:
-            FunctionName: !Ref StockCheckerFunction
+            FunctionName: !Ref SetUserFunction
         - LambdaInvokePolicy:
-            FunctionName: !Ref StockSellerFunction
+            FunctionName: !Ref GetUserFromS3Function
         - LambdaInvokePolicy:
-            FunctionName: !Ref StockBuyerFunction
+            FunctionName: !Ref SaveUserToDynamoDBFunction
         - DynamoDBWritePolicy:
             TableName: !Ref TransactionTable
 
-  StockCheckerFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+  SetUserFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/stock_checker/
+      CodeUri: functions/set_user/
       Handler: app.lambda_handler
       Runtime: python3.8
 
-  StockSellerFunction:
+  GetUserFromS3Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/stock_seller/
+      CodeUri: functions/get_user_from_s3/
       Handler: app.lambda_handler
       Runtime: python3.8
 
-  StockBuyerFunction:
+  SaveUserToDynamoDBFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/stock_buyer/
+      CodeUri: functions/save_user_to_dynamodb/
       Handler: app.lambda_handler
       Runtime: python3.8
 

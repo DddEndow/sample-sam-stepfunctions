@@ -1,10 +1,10 @@
 {
     "Comment": "A state machine that does mock stock trading.",
-    "StartAt": "Check Stock Value",
+    "StartAt": "Set User to S3",
     "States": {
-        "Check Stock Value": {
+        "Set User to S3": {
             "Type": "Task",
-            "Resource": "${StockCheckerFunctionArn}",
+            "Resource": "${SetUserFunctionArn}",
             "Retry": [
                 {
                     "ErrorEquals": [
@@ -15,82 +15,52 @@
                     "BackoffRate": 1.5
                 }
             ],
-            "Next": "Buy or Sell?"
+            "Next": "Fetch User Map"
         },
-        "Buy or Sell?": {
-            "Type": "Choice",
-            "Choices": [
-                {
-                    "Variable": "$.stock_price",
-                    "NumericLessThanEquals": 50,
-                    "Next": "Buy Stock"
-                }
-            ],
-            "Default": "Sell Stock"
-        },
-        "Sell Stock": {
-            "Type": "Task",
-            "Resource": "${StockSellerFunctionArn}",
-            "Retry": [
-                {
-                    "ErrorEquals": [
-                        "States.TaskFailed"
-                    ],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 1
-                }
-            ],
-            "Next": "Record Transaction"
-        },
-        "Buy Stock": {
-            "Type": "Task",
-            "Resource": "${StockBuyerFunctionArn}",
-            "Retry": [
-                {
-                    "ErrorEquals": [
-                        "States.TaskFailed"
-                    ],
-                    "IntervalSeconds": 2,
-                    "MaxAttempts": 3,
-                    "BackoffRate": 1
-                }
-            ],
-            "Next": "Record Transaction"
-        },
-        "Record Transaction": {
-            "Type": "Task",
-            "Resource": "${DDBPutItem}",
+        "Fetch User Map": {
+            "Type": "Map",
+            "InputPath": "$",
+            "ItemsPath": "$.user_id_list",
             "Parameters": {
-                "TableName": "${DDBTable}",
-                "Item": {
-                    "Id": {
-                        "S.$": "$.id"
+                "lower_user_list.$": "$$.Map.Item.Value",
+                "s3_key.$": "$.s3_key"
+            },
+            "MaxConcurrency": 0,
+            "Iterator": {
+                "StartAt": "Get User from S3",
+                "States": {
+                    "Get User from S3": {
+                        "Type": "Task",
+                        "Resource": "${GetUserFromS3FunctionArn}",
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "States.TaskFailed"
+                                ],
+                                "IntervalSeconds": 15,
+                                "MaxAttempts": 5,
+                                "BackoffRate": 1.5
+                            }
+                        ],
+                        "Next": "Save User to DynamoDB"
                     },
-                    "Type": {
-                        "S.$": "$.type"
-                    },
-                    "Price": {
-                        "N.$": "$.price"
-                    },
-                    "Quantity": {
-                        "N.$": "$.qty"
-                    },
-                    "Timestamp": {
-                        "S.$": "$.timestamp"
+                    "Save User to DynamoDB": {
+                        "Type": "Task",
+                        "Resource": "${SaveUserToDynamoDBFunctionArn}",
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "States.TaskFailed"
+                                ],
+                                "IntervalSeconds": 15,
+                                "MaxAttempts": 5,
+                                "BackoffRate": 1.5
+                            }
+                        ],
+                        "End": true
                     }
                 }
             },
-            "Retry": [
-                {
-                    "ErrorEquals": [
-                        "States.TaskFailed"
-                    ],
-                    "IntervalSeconds": 20,
-                    "MaxAttempts": 5,
-                    "BackoffRate": 10
-                }
-            ],
             "End": true
         }
     }
