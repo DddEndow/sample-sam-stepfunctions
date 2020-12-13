@@ -1,27 +1,24 @@
-from random import randint
+import os
+import json
+import boto3
+
+BUCKET_NAME = os.environ['BUCKET_NAME']
+
+json_key = "key"
+s3 = boto3.resource('s3')
+obj = s3.Object(BUCKET_NAME, json_key)
 
 
 def lambda_handler(event, context):
-    """Sample Lambda function which mocks the operation of checking the current price 
-    of a stock.
+    user_list = json.loads(obj.get()['Body'].read())
 
-    For demonstration purposes this Lambda function simply returns 
-    a random integer between 0 and 100 as the stock price.
+    print(user_list)
 
-    Parameters
-    ----------
-    event: dict, required
-        Input event to the Lambda function
+    user = user_list.get(str(event['user_id']))
 
-    context: object, required
-        Lambda Context runtime methods and attributes
+    print(user)
 
-    Returns
-    ------
-        dict: Object containing the current price of the stock
-    """
-    # Check current price of the stock
-    stock_price = randint(
-        0, 100
-    )  # Current stock price is mocked as a random integer between 0 and 100
-    return {"stock_price": stock_price}
+    return {
+        'user_id': event['user_id'],
+        'user': user
+    }

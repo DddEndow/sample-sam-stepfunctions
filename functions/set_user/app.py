@@ -34,6 +34,5 @@ def lambda_handler(event, context):
     obj.get()['Body'].read()
 
     return {
-        's3_key': json_key,
         'user_id_list': [1, 2, 3]
     }

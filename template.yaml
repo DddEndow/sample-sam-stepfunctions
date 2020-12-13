@@ -96,6 +96,10 @@ Resources:
       CodeUri: functions/get_user_from_s3/
       Handler: app.lambda_handler
       Runtime: python3.8
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3Contents
+      Role: !GetAtt AllowAccessToS3Role.Arn
 
   SaveUserToDynamoDBFunction:
     Type: AWS::Serverless::Function

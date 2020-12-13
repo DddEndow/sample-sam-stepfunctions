@@ -22,8 +22,7 @@
             "InputPath": "$",
             "ItemsPath": "$.user_id_list",
             "Parameters": {
-                "lower_user_list.$": "$$.Map.Item.Value",
-                "s3_key.$": "$.s3_key"
+                "user_id.$": "$$.Map.Item.Value"
             },
             "MaxConcurrency": 0,
             "Iterator": {
