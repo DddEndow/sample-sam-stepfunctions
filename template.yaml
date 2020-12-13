@@ -6,6 +6,30 @@ Description: >
   Sample SAM Template for sample-sam-stepfunctions
 
 Resources:
+  S3Contents:
+    Type: AWS::S3::Bucket
+
+  S3ContetsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Contents
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Effect: Allow
+            Resource:
+              'Fn::Join':
+                - ''
+                - - 'arn:aws:s3:::'
+                  - Ref: S3Contents
+                  - /*
+            Principal:
+              AWS:
+                - !GetAtt AllowAccessToS3Role.Arn
+
   StockTradingStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
@@ -33,12 +57,38 @@ Resources:
         - DynamoDBWritePolicy:
             TableName: !Ref TransactionTable
 
+  AllowAccessToS3Role: # TODO 共通処理として抜き出す
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowAccessToS3
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                 - s3:GetObject
+                 - s3:PutObject
+                 - s3:PutObjectAcl
+                Resource: !GetAtt S3Contents.Arn
+
   SetUserFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: functions/set_user/
       Handler: app.lambda_handler
       Runtime: python3.8
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref S3Contents
+      Role: !GetAtt AllowAccessToS3Role.Arn
 
   GetUserFromS3Function:
     Type: AWS::Serverless::Function

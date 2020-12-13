@@ -1,5 +1,8 @@
+import os
 import json
 import boto3
+
+BUCKET_NAME = os.environ['BUCKET_NAME']
 
 
 def lambda_handler(event, context):
@@ -7,10 +10,9 @@ def lambda_handler(event, context):
         S3にユーザーデータを保存し、ユーザーのIDのリストを返す。
     """
 
-    bucket_name = "test"
     json_key = "key"
     s3 = boto3.resource('s3')
-    obj = s3.Object(bucket_name, json_key)
+    obj = s3.Object(BUCKET_NAME, json_key)
 
     user_list_json = {
         1: {
