@@ -245,3 +245,5 @@ $RECYCLE.BIN/
 
 # IntelliJ
 .idea
+
+.aws-sam
