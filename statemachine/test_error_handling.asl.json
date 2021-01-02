@@ -1,0 +1,58 @@
+{
+    "Comment": "A state machine that does test step functions error handling.",
+    "StartAt": "Check Status",
+    "States": {
+        "Check Status": {
+            "Type": "Task",
+            "Resource": "${CheckStatusFunctionArn}",
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "TooManyRequestsException"
+                    ],
+                    "IntervalSeconds": 1,
+                    "MaxAttempts": 2,
+                    "BackoffRate": 1.5
+                }
+            ],
+            "Catch": [
+                {
+                    "ErrorEquals": ["TooManyRequestsException"],
+                    "Next": "Wait and Try Later"
+                }, {
+                    "ErrorEquals": ["ServerUnavailableException"],
+                    "Next": "Server Unavailable"
+                }, {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "Catch All"
+                }
+            ],
+            "Next": "OK"
+        },
+        "Wait and Try Later": {
+            "Type": "Wait",
+            "Seconds" : 1,
+            "Next" : "Change to 200"
+        },
+        "Server Unavailable": {
+            "Type": "Fail",
+            "Error":"ServerUnavailable",
+            "Cause": "The server is currently unable to handle the request."
+        },
+        "Catch All": {
+            "Type": "Fail",
+            "Cause": "Unknown error!",
+            "Error": "An error of unknown type occurred"
+        },
+        "Change to 200": {
+            "Type": "Pass",
+            "Result": {"statuscode" :"200"} ,
+            "Next": "Check Status"
+        },
+        "OK": {
+            "Type": "Pass",
+            "Result": "The request has succeeded.",
+            "End": true
+        }
+    }
+}

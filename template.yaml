@@ -118,6 +118,23 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
 
+  TestErrorHandlingStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachine/test_error_handling.asl.json
+      DefinitionSubstitutions:
+        CheckStatusFunctionArn: !GetAtt CheckStatusFunction.Arn
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref CheckStatusFunction
+
+  CheckStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/check_status/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+
 Outputs:
   # StockTradingStateMachineHourlyTradingSchedule is an implicit Schedule event rule created out of Events key under Serverless::StateMachine
   # Find out more about other implicit resources you can reference within SAM
